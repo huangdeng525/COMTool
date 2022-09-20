@@ -803,6 +803,7 @@ class Plugin(Plugin_Base):
             # have data in buffer
             if len(buffer) > 0:
                 hexstr = False
+                ExHexData = utils.bytes_to_hex_str(buffer)
                 # show as hex, just show
                 if not self.config["receiveAscii"]:
                     data = utils.bytes_to_hex_str(buffer)
@@ -843,6 +844,19 @@ class Plugin(Plugin_Base):
                             head = '{} '.format(head.rstrip())
                         if hexstr:
                             head += "[HEX] "
+                        if self.config["showTimestamp"] and not hexstr:
+                            if len(ExHexData) <= 48:
+                                head += "\r\n[HEX: " + ExHexData + "] "
+                            else:
+                                head += "\r\n[HEX: \r\n"
+                                showlocale = 48
+                                while showlocale < len(ExHexData):
+                                    head += ExHexData[showlocale-48:showlocale] + "\r\n"
+                                    showlocale += 48
+                                if showlocale != len(ExHexData):
+                                    head += ExHexData[showlocale-48:]
+                                head += "] \r\n"
+
                         if (self.config["recordSend"] or self.config["showTimestamp"]) and not head.endswith("<= "):
                             head = head[:-1] + ": "
                         new_line = False
