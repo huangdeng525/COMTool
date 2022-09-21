@@ -567,6 +567,7 @@ class Plugin(Plugin_Base):
                     if self.config["showTimestamp"]:
                         head += '[{}] '.format(utils.datetime_format_ms(datetime.now()))
                     isHexStr, sendStr, sendStrsColored = self.bytes2String(data, not self.config["receiveAscii"], encoding=self.configGlobal["encoding"])
+                    dummy, ExHexData, dummy = self.bytes2String(data, True, encoding=self.configGlobal["encoding"])
                     if isHexStr:
                         sendStr = sendStr.upper()
                         head += "[HEX] "
@@ -576,6 +577,20 @@ class Plugin(Plugin_Base):
                         head = "\n" + head
                     if head.strip() != '=>':
                         head = '{}: '.format(head.rstrip())
+
+                    if self.config["showTimestamp"] and not isHexStr:
+                        if len(ExHexData) <= 48:
+                            head += "\r\n[HEX: " + ExHexData + "] "
+                        else:
+                            head += "\r\n[HEX: \r\n"
+                            showlocale = 48
+                            while showlocale < len(ExHexData):
+                                head += ExHexData[showlocale-48:showlocale] + "\r\n"
+                                showlocale += 48
+                            if showlocale != len(ExHexData):
+                                head += ExHexData[showlocale-48:]
+                            head += "] \r\n"
+
                     self.receiveUpdateSignal.emit(head, [sendStr], self.configGlobal["encoding"])
                     self.sendRecord.insert(0, head + sendStr)
                 self.send(data_bytes=data, callback = self.onSent)
@@ -844,22 +859,23 @@ class Plugin(Plugin_Base):
                             head = '{} '.format(head.rstrip())
                         if hexstr:
                             head += "[HEX] "
-                        if self.config["showTimestamp"] and not hexstr:
-                            if len(ExHexData) <= 48:
-                                head += "\r\n[HEX: " + ExHexData + "] "
-                            else:
-                                head += "\r\n[HEX: \r\n"
-                                showlocale = 48
-                                while showlocale < len(ExHexData):
-                                    head += ExHexData[showlocale-48:showlocale] + "\r\n"
-                                    showlocale += 48
-                                if showlocale != len(ExHexData):
-                                    head += ExHexData[showlocale-48:]
-                                head += "] \r\n"
-
                         if (self.config["recordSend"] or self.config["showTimestamp"]) and not head.endswith("<= "):
                             head = head[:-1] + ": "
                         new_line = False
+
+                    if self.config["showTimestamp"] and not hexstr:
+                        if len(ExHexData) <= 48:
+                            head += "\r\n[HEX: " + ExHexData + "] "
+                        else:
+                            head += "\r\n[HEX: \r\n"
+                            showlocale = 48
+                            while showlocale < len(ExHexData):
+                                head += ExHexData[showlocale-48:showlocale] + "\r\n"
+                                showlocale += 48
+                            if showlocale != len(ExHexData):
+                                head += ExHexData[showlocale-48:]
+                            head += "] \r\n"
+
                     self.receiveUpdateSignal.emit(head, [colorData], self.configGlobal["encoding"])
                     logData = head + data
             if len(new) > 0:
